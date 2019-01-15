@@ -1,0 +1,1 @@
+copy /y F:\android-workplace\albert\HelloUpload\wsupload\build\intermediates\packaged-classes\release\classes.jar  F:\android-workplace\albert\cloud2019\cloudlib\libs\wsupload.jar
