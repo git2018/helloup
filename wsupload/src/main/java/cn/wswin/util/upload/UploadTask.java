@@ -82,7 +82,7 @@ class UploadTask implements Runnable {
 
                 //包重传
                 int retryCount = 5;
-                while (code == 500 || code == 501) {
+                while (code == 500 || code == 501 ) {
 
                     if (retryCount <= 0) {
                         saveInfo(UploadInfo.STATE_FAILED);
@@ -102,10 +102,11 @@ class UploadTask implements Runnable {
 
                 if (code == 200) {
                     mInfo.setCurrentLength(accept);
-                    if (System.currentTimeMillis() - markTime > 1000) {
-                        markTime = System.currentTimeMillis();
-                        saveInfo(UploadInfo.STATE_UPLOADING);
-                    }
+//                    if (System.currentTimeMillis() - markTime > 1000) {
+//                        markTime = System.currentTimeMillis();
+//                        saveInfo(UploadInfo.STATE_UPLOADING);
+//                    }
+                    saveInfo(UploadInfo.STATE_UPLOADING);
                     continue;
                 }
 

@@ -79,7 +79,7 @@ class UploadDBUtil {
 
         UploadDBHelper uploadDbHelper = UploadDBHelper.getInstance();
         if (uploadDbHelper != null) {
-            String sql = "SELECT * FROM upload_list ORDER BY create_time DESC";
+            String sql = "SELECT * FROM upload_list ORDER BY file_name ASC";
             Cursor cursor = uploadDbHelper.getWritableDatabase().rawQuery(sql, null);
             while (cursor.moveToNext()) {
                 String id = cursor.getString(cursor.getColumnIndex("id"));
