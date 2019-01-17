@@ -78,11 +78,9 @@ class UploadTask implements Runnable {
                 int code = jsonResponse.getInt("code");
                 long accept = jsonResponse.getLong("accept");
 
-                Log.d("UploadTask","run -> "+ mInfo.getCmd() + " | " + code);
-
                 //包重传
                 int retryCount = 5;
-                while (code == 500 || code == 501 ) {
+                while (code == 500 || code == 501 ) {//解析失败  检验失败
 
                     if (retryCount <= 0) {
                         saveInfo(UploadInfo.STATE_FAILED);
@@ -102,11 +100,11 @@ class UploadTask implements Runnable {
 
                 if (code == 200) {
                     mInfo.setCurrentLength(accept);
-//                    if (System.currentTimeMillis() - markTime > 1000) {
-//                        markTime = System.currentTimeMillis();
-//                        saveInfo(UploadInfo.STATE_UPLOADING);
-//                    }
-                    saveInfo(UploadInfo.STATE_UPLOADING);
+                    if (System.currentTimeMillis() - markTime > 100) {
+                        markTime = System.currentTimeMillis();
+                        saveInfo(UploadInfo.STATE_UPLOADING);
+                    }
+//                    saveInfo(UploadInfo.STATE_UPLOADING);
                     continue;
                 }
 

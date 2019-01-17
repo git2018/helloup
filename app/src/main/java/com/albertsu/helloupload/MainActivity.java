@@ -12,10 +12,13 @@ import android.widget.Toast;
 import com.gun0912.tedpermission.PermissionListener;
 import com.gun0912.tedpermission.TedPermission;
 
+import org.json.JSONObject;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import cn.wswin.util.upload.MD5;
 import cn.wswin.util.upload.UploadInfo;
 import cn.wswin.util.upload.UploadUtil;
 
@@ -87,15 +90,52 @@ public class MainActivity extends AppCompatActivity {
 //                    UploadUtil.getInstance().commitUploadTask("0", info.getDir()+"/"+info.getName(), "120.26.126.129", "16881");
 //                }
 
-                File[] files = new File("/storage/emulated/0/DCIM/Camera/").listFiles();
-                for (int i=0;i<files.length;i++)
-                {
-                    File file = files[i];
-                    if (file.getName().endsWith("mp4"))
-                        UploadUtil.getInstance().commitUploadTask("0", file.getPath(), "120.26.126.129", "16881");
-                }
-//                UploadUtil.getInstance().commitUploadTask("0", files[1].getPath(), "120.26.126.129", "16881");
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
 
+                        final File[] files = new File("/storage/emulated/0/DCIM/Camera/").listFiles();
+                        for (int i=0;i<files.length;i++) {
+                            final File file = files[i];
+                            if (file.getName().endsWith("mp4")) {
+                                String md5 = MD5.getMd5ByFile(file);
+                                String result = ApiUtil.authHttpGet("http://192.168.16.181/api/progress/"+md5);
+                                try {
+                                    long currentLength = 0;
+                                    JSONObject jsonObject = new JSONObject(result);
+                                    String data = jsonObject.getString("data");
+                                    if (!data.equalsIgnoreCase("null"))
+                                        currentLength = Long.parseLong(jsonObject.getJSONObject("data").getString("offset"));
+
+                                    UploadUtil.getInstance().commitUploadTask( file.getPath(), "192.168.16.182", "81",currentLength);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+
+                            }
+                        }
+                    }
+                }).start();
+
+
+//                final File[] files = new File("/storage/emulated/0/DCIM/Camera/").listFiles();
+//                for (int i=0;i<files.length;i++) {
+//                    final File file = files[i];
+//                    if (file.getName().endsWith("mp4")) {
+//
+//
+//                    }
+//                }
+//                    new Thread(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            final String md5 = MD5.getMd5ByFile(file);
+//                            String result = ApiUtil.authHttpGet("http://192.168.16.181/api/progress/"+md5);
+//                            Log.d("progressprogress",result);
+//                        }
+//                    }).start();
+//                        UploadUtil.getInstance().commitUploadTask(file.getPath(), "192.168.16.182", "81");
+//                }
 //                String filePath = "/storage/emulated/0/DCIM/Camera/IMG_20190109_173534.jpg";
 //                UploadUtil.getInstance().commitUploadTask("0", filePath, "120.26.126.129", "16881");
 

@@ -6,9 +6,8 @@ import android.content.Context;
 import java.io.File;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Created by albert on 2019/1/7.
@@ -19,21 +18,7 @@ public class UploadUtil {
     private Context context;
     private static UploadUtil sInstance;
 
-    // 处理器个数
-    private final static int PROCESS_NUM = Runtime.getRuntime().availableProcessors();
-    private final static int THREAD_NUM = Math.max(PROCESS_NUM, 4) * 5;
-    private final static int DISPENSE_MAX_WAITTING_THREAD_NUM = Short.MAX_VALUE >> 1;// 16383
-
-    // 线程池，拒绝策略为丢弃旧的任务
-    private static ThreadPoolExecutor executorService = new ThreadPoolExecutor(
-            THREAD_NUM,
-            THREAD_NUM,
-            0L,
-            TimeUnit.MILLISECONDS,
-            new LinkedBlockingQueue<Runnable>(DISPENSE_MAX_WAITTING_THREAD_NUM),
-            new NameThreadFactory("图片备份任务"),
-            new ThreadPoolExecutor.DiscardOldestPolicy());
-    // 存储任务容器
+    private ExecutorService executorService = Executors.newFixedThreadPool(5);
     private static ConcurrentHashMap<String, UploadTask> map = new ConcurrentHashMap<>();
     
     public static UploadUtil getInstance() {
@@ -73,7 +58,8 @@ public class UploadUtil {
     public void enqueue(UploadInfo info) {
         UploadTask task = new UploadTask(info);
         map.put(info.getId(), task);
-        executorService.submit(task);
+        UploadDBUtil.getInstance().saveUploadInfo(info);
+        executorService.execute(task);
     }
 
     public void start(UploadInfo info) {
@@ -82,7 +68,7 @@ public class UploadUtil {
     }
 
     public void pause(UploadInfo info) {
-        if (map.containsKey(info.getId()))
+        if (info.getState() == UploadInfo.STATE_UPLOADING && map.containsKey(info.getId()))
             map.get(info.getId()).pause();
     }
 
@@ -96,7 +82,7 @@ public class UploadUtil {
     /**
      * 提交上传任务
      */
-    public void commitUploadTask(String pid,String path,String host,String port) {
+    public void commitUploadTask(String path,String host,String port,long currentLength) {
         File file = new File(path);
         String md5 = MD5.getMd5ByFile(file);
 
@@ -104,14 +90,21 @@ public class UploadUtil {
                 Integer.valueOf(port),
                 file.getParent(),
                 file.getName(),
-                pid,
+                "0",
                 md5
         )
                 .md5(md5)
                 .build();
+        uploadInfo.setCurrentLength(currentLength);
         uploadInfo.setState(UploadInfo.STATE_ENQUEUE);
         enqueue(uploadInfo);
     }
+
+    public void commitUploadTask(String path,String host,String port) {
+        commitUploadTask(path,host,port,0);
+    }
+
+
 
     /**
      * 获取所有上传任务

@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
 
-class MD5 {
+public class MD5 {
 
     public static String getMd5ByFile(File file) {
         InputStream inputStream = null;
