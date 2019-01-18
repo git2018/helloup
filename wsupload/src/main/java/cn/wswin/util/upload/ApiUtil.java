@@ -1,4 +1,4 @@
-package com.albertsu.helloupload;
+package cn.wswin.util.upload;
 
 
 import android.support.annotation.Nullable;
@@ -13,14 +13,11 @@ import java.net.URL;
 
 public class ApiUtil {
 
-    private static int TIMEOUT = 3000;
-
-
     private static HttpURLConnection connect(String url) throws Exception {
         URL mUrl = new URL(url);
         HttpURLConnection conn = null;
         conn = (HttpURLConnection) mUrl.openConnection();
-        conn.setConnectTimeout(TIMEOUT);
+        conn.setConnectTimeout(60000);
         conn.setDoInput(true);
         return conn;
     }
@@ -53,8 +50,7 @@ public class ApiUtil {
     /**
      * 使用Authorization验证的get请求
      */
-    public static String authHttpGet(String url) {
-
+    public static void getCurrentLengthOnline(String url,OnApiListener listener) {
         String result = null;
         HttpURLConnection connection = null;
         InputStream inputStream = null;
@@ -72,11 +68,11 @@ public class ApiUtil {
                     stringBuilder.append(line);
                 }
                 result = stringBuilder.toString();
+                listener.onResult(result);
             }
 
         } catch (Exception e) {
             e.printStackTrace();
-            return null;
         } finally {
             if (connection != null) {
                 connection.disconnect();
@@ -94,6 +90,9 @@ public class ApiUtil {
             }
 
         }
-        return result;
+    }
+
+    interface OnApiListener{
+        void onResult(String result);
     }
 }

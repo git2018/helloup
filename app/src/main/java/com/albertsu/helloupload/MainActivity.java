@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.Toast;
@@ -12,13 +13,10 @@ import android.widget.Toast;
 import com.gun0912.tedpermission.PermissionListener;
 import com.gun0912.tedpermission.TedPermission;
 
-import org.json.JSONObject;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import cn.wswin.util.upload.MD5;
 import cn.wswin.util.upload.UploadInfo;
 import cn.wswin.util.upload.UploadUtil;
 
@@ -31,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_pic_transfer);
 
-        UploadUtil.getInstance().init(this);
+        UploadUtil.getInstance().init(this,"hhh.db","http://192.168.16.181");
 
         LinearLayoutManager mManager1 = new LinearLayoutManager(MainActivity.this);
         mManager1.setOrientation(LinearLayout.VERTICAL);
@@ -78,6 +76,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        UploadUtil.getInstance().setOnGoingListener(new UploadUtil.OnGoingListener() {
+            @Override
+            public void onResult(int number) {
+                Log.d("setOnGoingListener",""+number);
+            }
+        });
+
         String[] permissions = new String[]{
                 Manifest.permission.INTERNET,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -90,32 +95,35 @@ public class MainActivity extends AppCompatActivity {
 //                    UploadUtil.getInstance().commitUploadTask("0", info.getDir()+"/"+info.getName(), "120.26.126.129", "16881");
 //                }
 
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
+//                new Thread(new Runnable() {
+//                    @Override
+//                    public void run() {
 
                         final File[] files = new File("/storage/emulated/0/DCIM/Camera/").listFiles();
                         for (int i=0;i<files.length;i++) {
                             final File file = files[i];
-                            if (file.getName().endsWith("mp4")) {
-                                String md5 = MD5.getMd5ByFile(file);
-                                String result = ApiUtil.authHttpGet("http://192.168.16.181/api/progress/"+md5);
-                                try {
-                                    long currentLength = 0;
-                                    JSONObject jsonObject = new JSONObject(result);
-                                    String data = jsonObject.getString("data");
-                                    if (!data.equalsIgnoreCase("null"))
-                                        currentLength = Long.parseLong(jsonObject.getJSONObject("data").getString("offset"));
-
-                                    UploadUtil.getInstance().commitUploadTask( file.getPath(), "192.168.16.182", "81",currentLength);
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-
+                            if (file.getName().endsWith("jpg")) {
+                                UploadUtil.getInstance().commitUploadTask(file.getPath(), "192.168.16.182", "81");
                             }
                         }
-                    }
-                }).start();
+//                                String md5 = MD5.getMd5ByFile(file);
+//                                String result = ApiUtil.authHttpGet("http://192.168.16.181/api/progress/"+md5);
+//                                try {
+//                                    long currentLength = 0;
+//                                    JSONObject jsonObject = new JSONObject(result);
+//                                    String data = jsonObject.getString("data");
+//                                    if (!data.equalsIgnoreCase("null"))
+//                                        currentLength = Long.parseLong(jsonObject.getJSONObject("data").getString("offset"));
+//
+//                                    UploadUtil.getInstance().commitUploadTask( file.getPath(), "192.168.16.182", "81",currentLength);
+//                                } catch (Exception e) {
+//                                    e.printStackTrace();
+//                                }
+
+//                            }
+//                        }
+//                    }
+//                }).start();
 
 
 //                final File[] files = new File("/storage/emulated/0/DCIM/Camera/").listFiles();

@@ -1,7 +1,5 @@
 package cn.wswin.util.upload;
 
-import android.util.Log;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -24,13 +22,39 @@ class UploadTask implements Runnable {
     private UploadInfo mInfo;
     private Socket mSocket;
     private RandomAccessFile mFile;
+    private String apiUrl;
+    private Boolean suspended = false;
 
      UploadTask(UploadInfo info) {
         mInfo = info;
     }
 
+    UploadTask(UploadInfo info,String apiUrl) {
+        mInfo = info;
+        this.apiUrl = apiUrl;
+    }
+
     @Override
     public void run() {
+        ApiUtil.getCurrentLengthOnline(apiUrl+"/api/progress/"+mInfo.getMD5(), new ApiUtil.OnApiListener() {
+            @Override
+            public void onResult(String result) {
+                try {
+                    long currentLength = 0;
+                    JSONObject jsonObject = new JSONObject(result);
+                    String data = jsonObject.getString("data");
+                    if (!data.equalsIgnoreCase("null"))
+                        currentLength = Long.parseLong(jsonObject.getJSONObject("data").getString("offset"));
+                    mInfo.setCurrentLength(currentLength);
+                    core();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    private void core(){
         try {
             mSocket = new Socket();
             SocketAddress socketAddress = new InetSocketAddress(mInfo.getAddress(), mInfo.getPortal());
@@ -59,6 +83,17 @@ class UploadTask implements Runnable {
             long markTime = System.currentTimeMillis();
 
             while (((length = mFile.read(buffer)) != -1) ) {
+
+                synchronized (this){
+                if (suspended) {
+                    try {
+                        wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
 
                 if (length < 0) {
                     length = 0;
@@ -112,10 +147,9 @@ class UploadTask implements Runnable {
                     mInfo.setCurrentLength(accept);
                     saveInfo(UploadInfo.STATE_FINISHED);
                     return;
-                } else if (code == 503) {//是否需要停止
-                    saveInfo(UploadInfo.STATE_CANCELED);
+                } else if (code == 503) {//取消
                     return;
-                } else if (code == 504) {
+                } else if (code == 504) {//暂停
                     saveInfo(UploadInfo.STATE_PAUSED);
                 } else {
                     saveInfo(UploadInfo.STATE_FAILED);
@@ -208,19 +242,27 @@ class UploadTask implements Runnable {
         return null;
     }
 
-    public void start() {
+     synchronized public void start() {
          mInfo.setState(UploadInfo.STATE_ENQUEUE);
          mInfo.setCmd(UploadInfo.CMD_NORMAL);
-    }
-    public void pause() {
-        mInfo.setState(UploadInfo.STATE_PAUSED);
-        mInfo.setCmd(UploadInfo.CMD_PAUSE);
+
+         saveInfo(UploadInfo.STATE_ENQUEUE);
+         suspended = false;
+         notify();
     }
 
-    public void stop() {
-        saveInfo(UploadInfo.STATE_CANCELED);
+     synchronized public void pause() {
+        mInfo.setState(UploadInfo.STATE_PAUSED);
+        mInfo.setCmd(UploadInfo.CMD_PAUSE);
+
+         saveInfo(UploadInfo.STATE_PAUSED);
+         suspended = true;
+    }
+
+    synchronized public void stop() {
         mInfo.setState(UploadInfo.STATE_CANCELED);
         mInfo.setCmd(UploadInfo.CMD_CANCEL);
+        saveInfo(UploadInfo.STATE_CANCELED);
     }
 
     private synchronized void saveInfo(int state){

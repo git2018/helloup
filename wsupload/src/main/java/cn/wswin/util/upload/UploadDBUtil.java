@@ -14,6 +14,7 @@ class UploadDBUtil {
 
     private static UploadDBUtil sInstance;
     private UploadUtil.Listener listener ;
+    private UploadUtil.OnGoingListener onGoingListener ;
     private UploadUtil.CloudListener cloudListener;
 
     public void setListener(UploadUtil.Listener listener) {
@@ -22,6 +23,10 @@ class UploadDBUtil {
 
     public void setCloudListener(UploadUtil.CloudListener listener) {
         this.cloudListener = listener;
+    }
+
+    public void setOnGoingListener(UploadUtil.OnGoingListener listener) {
+        this.onGoingListener = listener;
     }
 
     private UploadDBUtil() {
@@ -40,6 +45,7 @@ class UploadDBUtil {
 
     public synchronized void saveUploadInfo(final UploadInfo info) {
             UploadDBHelper uploadDbHelper = UploadDBHelper.getInstance();
+            int onGoingNum = 0;
             if (uploadDbHelper != null) {
                 if (info.getState() != UploadInfo.STATE_CANCELED) {
                     String sql = "insert or replace into upload_list ("
@@ -56,9 +62,15 @@ class UploadDBUtil {
                     String sql = "DELETE FROM upload_list WHERE id = ?";
                     uploadDbHelper.getWritableDatabase().execSQL(sql, new Object[]{info.getId()});
                 }
+
+                String sql = "SELECT * FROM upload_list WHERE state != "+UploadInfo.STATE_FINISHED;
+                Cursor cursor = uploadDbHelper.getWritableDatabase().rawQuery(sql, null);
+                onGoingNum = cursor.getCount();
+                cursor.close();
             }
             //切回主线程
-            new Handler(Looper.getMainLooper()).post(new Runnable() {
+        final int finalOnGoingNum = onGoingNum;
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
                     @Override
                     public void run() {
                         if (listener != null)
@@ -70,6 +82,8 @@ class UploadDBUtil {
                                 default:
                             }
                         }
+                        if (onGoingListener != null)
+                            onGoingListener.onResult(finalOnGoingNum);
                     }
                 });
     }
