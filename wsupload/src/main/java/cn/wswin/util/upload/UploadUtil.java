@@ -58,17 +58,10 @@ public class UploadUtil {
                 .md5(md5)
                 .build();
         uploadInfo.setState(UploadInfo.STATE_ENQUEUE);
-        enqueue(uploadInfo);
-    }
+        UploadDBUtil.getInstance().saveUploadInfo(uploadInfo);
 
-
-    /***
-     *   上传 队列
-     *  */
-    public void enqueue(final UploadInfo info) {
-        final UploadTask task = new UploadTask(info,apiUrl);
-        map.put(info.getId(), task);
-        UploadDBUtil.getInstance().saveUploadInfo(info);
+        UploadTask task = new UploadTask(uploadInfo);
+        map.put(uploadInfo.getId(), task);
         executorService.execute(task);
     }
 
@@ -107,7 +100,6 @@ public class UploadUtil {
     }
 
     public interface CloudListener {
-        void onCreateDir(UploadInfo info);
         void onAddItem(UploadInfo info);
     }
 
@@ -133,5 +125,9 @@ public class UploadUtil {
     public void destroy() {
         executorService.shutdown();
         sInstance = null;
+    }
+
+    public String getApiUrl() {
+        return apiUrl;
     }
 }

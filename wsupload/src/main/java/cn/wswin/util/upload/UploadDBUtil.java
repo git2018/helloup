@@ -13,7 +13,7 @@ import java.util.List;
 class UploadDBUtil {
 
     private static UploadDBUtil sInstance;
-    private UploadUtil.Listener listener ;
+    private UploadUtil.Listener listener;
     private UploadUtil.OnGoingListener onGoingListener ;
     private UploadUtil.CloudListener cloudListener;
 
@@ -77,7 +77,6 @@ class UploadDBUtil {
                             listener.onChange(info);
                         if (cloudListener!=null){
                             switch (info.getState()){
-                                case UploadInfo.STATE_ENQUEUE: cloudListener.onCreateDir(info); break;
                                 case UploadInfo.STATE_FINISHED:cloudListener.onAddItem(info); break;
                                 default:
                             }
@@ -88,7 +87,7 @@ class UploadDBUtil {
                 });
     }
 
-    public synchronized List<UploadInfo> loadAllUploadInfo() {
+    public List<UploadInfo> loadAllUploadInfo() {
         List<UploadInfo> infoList = new ArrayList<>();
 
         UploadDBHelper uploadDbHelper = UploadDBHelper.getInstance();
@@ -123,70 +122,4 @@ class UploadDBUtil {
         }
         return infoList;
     }
-
-    synchronized boolean isUploadInfoExists(String id) {
-        UploadDBHelper uploadDbHelper = UploadDBHelper.getInstance();
-        boolean isExists = false;
-        if (uploadDbHelper != null) {
-            Cursor cursor = uploadDbHelper.getWritableDatabase()
-                    .query("upload_list", null, "id=?", new String[]{id},
-                            null, null, null);
-            if (cursor.moveToNext()) {
-                isExists = true;
-            }
-            cursor.close();
-        }
-        return isExists;
-    }
-
-    public synchronized UploadInfo getUploadInfo(String id) {
-        UploadDBHelper uploadDbHelper = UploadDBHelper.getInstance();
-        if (uploadDbHelper != null) {
-            Cursor cursor = uploadDbHelper.getWritableDatabase()
-                    .query("upload_list", null, "id=?", new String[]{id},
-                            null, null, null);
-            if (cursor.moveToNext()) {
-                String address = cursor.getString(cursor.getColumnIndex("address"));
-                int portal = cursor.getInt(cursor.getColumnIndex("portal"));
-                String dir = cursor.getString(cursor.getColumnIndex("dir"));
-                String fileName = cursor.getString(cursor.getColumnIndex("file_name"));
-                int state = cursor.getInt(cursor.getColumnIndex("state"));
-                long createTime = cursor.getInt(cursor.getColumnIndex("create_time"));
-                int currentLength = cursor.getInt(cursor.getColumnIndex("current_length"));
-                String md5 = cursor.getString(cursor.getColumnIndex("md5"));
-
-                UploadInfo info = new UploadInfo.Builder(address,
-                        portal, dir, fileName,"","")
-                        .id(id)
-                        .md5(md5)
-                        .build();
-
-                info.setState(state);
-                info.setCreateTime(createTime);
-                info.setCurrentLength(currentLength);
-
-                return info;
-            }
-            cursor.close();
-        }
-        return null;
-    }
-
-    synchronized void deleteUploadInfo(UploadInfo info) {
-        UploadDBHelper uploadDbHelper = UploadDBHelper.getInstance();
-        if (uploadDbHelper != null) {
-            String sql = "DELETE FROM upload_list WHERE id = ?";
-            uploadDbHelper.getWritableDatabase().execSQL(sql, new Object[]{info.getId()});
-        }
-    }
-
-    synchronized void deleteAllUploadInfo() {
-        UploadDBHelper uploadDbHelper = UploadDBHelper.getInstance();
-        if (uploadDbHelper != null) {
-            String sql = "delete from upload_list";
-            uploadDbHelper.getWritableDatabase().execSQL(sql, new Object[]{});
-
-        }
-    }
-
 }

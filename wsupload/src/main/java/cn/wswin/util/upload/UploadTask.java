@@ -24,21 +24,15 @@ class UploadTask implements Runnable {
     private UploadInfo mInfo;
     private Socket mSocket;
     private RandomAccessFile mFile;
-    private String apiUrl;
     private Boolean suspended = false;
 
      UploadTask(UploadInfo info) {
         mInfo = info;
     }
 
-    UploadTask(UploadInfo info,String apiUrl) {
-        mInfo = info;
-        this.apiUrl = apiUrl;
-    }
-
     @Override
     public void run() {
-        ApiUtil.getCurrentLengthOnline(apiUrl+"/api/progress/"+mInfo.getMD5(), new ApiUtil.OnApiListener() {
+        ApiUtil.getCurrentLengthOnline(UploadUtil.getInstance().getApiUrl()+"/api/progress/"+mInfo.getMD5(), new ApiUtil.OnApiListener() {
             @Override
             public void onResult(String result) {
                 try {
@@ -137,7 +131,7 @@ class UploadTask implements Runnable {
 
                 if (code == 200) {
                     mInfo.setCurrentLength(accept);
-                    if (System.currentTimeMillis() - markTime > 100) {
+                    if (System.currentTimeMillis() - markTime > 500) {
                         markTime = System.currentTimeMillis();
                         saveInfo(UploadInfo.STATE_UPLOADING);
                     }
