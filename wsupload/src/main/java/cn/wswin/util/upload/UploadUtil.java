@@ -73,13 +73,12 @@ public class UploadUtil {
     }
 
     public void start(UploadInfo info) {
-        if (map.containsKey(info.getId()))
-            map.get(info.getId()).start();
+        if (info.getState() == UploadInfo.STATE_PAUSED &&map.containsKey(info.getId()))
+            map.get(info.getId()).resume();
     }
 
     public void pause(UploadInfo info) {
-        if (info.getState() == UploadInfo.STATE_UPLOADING &&
-                map.containsKey(info.getId()))
+        if (info.getState() == UploadInfo.STATE_UPLOADING && map.containsKey(info.getId()))
             map.get(info.getId()).pause();
     }
 

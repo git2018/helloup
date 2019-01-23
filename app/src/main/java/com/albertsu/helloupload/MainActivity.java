@@ -102,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
                         final File[] files = new File("/storage/emulated/0/DCIM/Camera/").listFiles();
                         for (int i=0;i<files.length;i++) {
                             final File file = files[i];
-                            if (file.getName().endsWith("jpg")) {
+                            if (file.getName().endsWith("mp4")) {
                                 UploadUtil.getInstance().commitUploadTask(file.getPath(), "192.168.16.182", "81");
                             }
                         }

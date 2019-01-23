@@ -1,5 +1,7 @@
 package cn.wswin.util.upload;
 
+import android.util.Log;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -85,7 +87,7 @@ class UploadTask implements Runnable {
             while (((length = mFile.read(buffer)) != -1) ) {
 
                 synchronized (this){
-                if (suspended) {
+                while (suspended) {
                     try {
                         wait();
                     } catch (InterruptedException e) {
@@ -150,7 +152,7 @@ class UploadTask implements Runnable {
                 } else if (code == 503) {//取消
                     return;
                 } else if (code == 504) {//暂停
-                    saveInfo(UploadInfo.STATE_PAUSED);
+//                    saveInfo(UploadInfo.STATE_PAUSED);
                 } else {
                     saveInfo(UploadInfo.STATE_FAILED);
                     return;
@@ -242,30 +244,26 @@ class UploadTask implements Runnable {
         return null;
     }
 
-     synchronized public void start() {
-         mInfo.setState(UploadInfo.STATE_ENQUEUE);
-         mInfo.setCmd(UploadInfo.CMD_NORMAL);
-
-         saveInfo(UploadInfo.STATE_ENQUEUE);
-         suspended = false;
-         notify();
-    }
-
-     synchronized public void pause() {
-        mInfo.setState(UploadInfo.STATE_PAUSED);
-        mInfo.setCmd(UploadInfo.CMD_PAUSE);
-
-         saveInfo(UploadInfo.STATE_PAUSED);
+      public void pause() {
          suspended = true;
+        mInfo.setCmd(UploadInfo.CMD_PAUSE);
+        saveInfo(UploadInfo.STATE_PAUSED);
     }
 
-    synchronized public void stop() {
-        mInfo.setState(UploadInfo.STATE_CANCELED);
+     public void stop() {
+         suspended = true;
         mInfo.setCmd(UploadInfo.CMD_CANCEL);
         saveInfo(UploadInfo.STATE_CANCELED);
     }
 
-    private synchronized void saveInfo(int state){
+    synchronized public void resume() {
+        suspended = false;
+        notify();
+        mInfo.setCmd(UploadInfo.CMD_NORMAL);
+        saveInfo(UploadInfo.STATE_UPLOADING);
+    }
+
+    private void saveInfo(int state){
         mInfo.setState(state);
         UploadDBUtil.getInstance().saveUploadInfo(mInfo);
     }
