@@ -43,7 +43,7 @@ class UploadDBUtil {
         return sInstance;
     }
 
-    public void saveUploadInfo(final UploadInfo info) {
+    public synchronized void saveUploadInfo(final UploadInfo info) {
             UploadDBHelper uploadDbHelper = UploadDBHelper.getInstance();
             int onGoingNum = 0;
             if (uploadDbHelper != null) {
