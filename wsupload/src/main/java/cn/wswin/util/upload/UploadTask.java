@@ -1,7 +1,5 @@
 package cn.wswin.util.upload;
 
-import android.util.Log;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -32,22 +30,7 @@ class UploadTask implements Runnable {
 
     @Override
     public void run() {
-        ApiUtil.getCurrentLengthOnline(UploadUtil.getInstance().getApiUrl()+"/api/progress/"+mInfo.getMD5(), new ApiUtil.OnApiListener() {
-            @Override
-            public void onResult(String result) {
-                try {
-                    long currentLength = 0;
-                    JSONObject jsonObject = new JSONObject(result);
-                    String data = jsonObject.getString("data");
-                    if (!data.equalsIgnoreCase("null"))
-                        currentLength = Long.parseLong(jsonObject.getJSONObject("data").getString("offset"));
-                    mInfo.setCurrentLength(currentLength);
-                    core();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
+        core();
     }
 
     private void core(){
@@ -96,22 +79,20 @@ class UploadTask implements Runnable {
 //                boolean check = bd == yd;
 //                Log.d("getFilePointer","长度"+mInfo.getFileLength()+ " 本地"+bd + " 云端"+yd + " 当前" + length +" "+check + " "+code);
                 mFile.seek(accept);
+                mInfo.setCurrentLength(accept);
 
                 if (code == 200) {
-                    mInfo.setCurrentLength(accept);
                     saveInfo(UploadInfo.STATE_UPLOADING);
                     continue;
                 }
 
                 if (code == 304) {
-                    mInfo.setCurrentLength(accept);
                     saveInfo(UploadInfo.STATE_FINISHED);
                     return;
                 }
 
                 if (code == 502) {
                     if (accept == mInfo.getFileLength() && length<buffer.length){
-                        mInfo.setCurrentLength(accept);
                         saveInfo(UploadInfo.STATE_FINISHED);
                     }else {
                         saveInfo(UploadInfo.STATE_FAILED);
@@ -203,10 +184,6 @@ class UploadTask implements Runnable {
             e.printStackTrace();
         }
         return null;
-    }
-
-    interface Listener{
-         void onResult(String response);
     }
 
       public void pause() {
