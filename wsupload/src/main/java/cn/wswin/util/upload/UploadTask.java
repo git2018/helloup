@@ -61,22 +61,12 @@ class UploadTask implements Runnable {
             e.printStackTrace();
         }
 
-        File file = new File(mInfo.getDir(), mInfo.getName());
-        if (!file.exists() || !file.canRead()) {
-            saveInfo(UploadInfo.STATE_FAILED);
-        }
-
-        if (mInfo.getMD5() == null) {
-            String md5 = MD5.getMd5ByFile(file);
-            mInfo.setMD5(md5);
-        }
-
         try {
-            mFile = new RandomAccessFile(file, "r");
-            mFile.seek(mInfo.getCurrentLength());
+            mFile = new RandomAccessFile(new File(mInfo.getDir(), mInfo.getName()), "r");
             int length = 0;
             byte[] buffer = new byte[1024 * 10];
             long markTime = System.currentTimeMillis();
+            int retryCount = 5;
 
             while (((length = mFile.read(buffer)) != -1) ) {
 
@@ -90,52 +80,25 @@ class UploadTask implements Runnable {
                 }
             }
 
-
-                if (length < 0) {
-                    length = 0;
-                }
-
                 byte[] filePackets = new byte[length];
                 System.arraycopy(buffer, 0, filePackets, 0, length);
-
                 byte[] bytesTotal = getSocketPacket(filePackets);
 
                 String response = sendSocketPacket(bytesTotal);
-                if (response == null) {
-                    saveInfo(UploadInfo.STATE_FAILED);
-                    break;
-                }
+
                 JSONObject jsonResponse = new JSONObject(response);
                 int code = jsonResponse.getInt("code");
                 long accept = jsonResponse.getLong("accept");
 
-                //包重传
-                int retryCount = 5;
-                while (code == 500 || code == 501 ) {//解析失败  检验失败
-
-                    if (retryCount <= 0) {
-                        saveInfo(UploadInfo.STATE_FAILED);
-                        return;
-                    }
-
-                    response = sendSocketPacket(bytesTotal);
-                    if (response == null) {
-                        saveInfo(UploadInfo.STATE_FAILED);
-                        return;
-                    }
-                    jsonResponse = new JSONObject(response);
-                    code = jsonResponse.getInt("code");
-                    accept = jsonResponse.getLong("accept");
-                    retryCount--;
-                }
+                long bd = mFile.getFilePointer();
+                long yd = accept;
+                boolean check = bd == yd;
+                Log.d("getFilePointer","长度"+mInfo.getFileLength()+ " 本地"+bd + " 云端"+yd + " 当前" + length +" "+check + " "+code);
+                mFile.seek(accept);
 
                 if (code == 200) {
                     mInfo.setCurrentLength(accept);
-                    if (System.currentTimeMillis() - markTime > 500) {
-                        markTime = System.currentTimeMillis();
-                        saveInfo(UploadInfo.STATE_UPLOADING);
-                    }
-//                    saveInfo(UploadInfo.STATE_UPLOADING);
+                    saveInfo(UploadInfo.STATE_UPLOADING);
                     continue;
                 }
 
@@ -143,12 +106,12 @@ class UploadTask implements Runnable {
                     mInfo.setCurrentLength(accept);
                     saveInfo(UploadInfo.STATE_FINISHED);
                     return;
-                } else if (code == 503) {//取消
-                    return;
-                } else if (code == 504) {//暂停
-//                    saveInfo(UploadInfo.STATE_PAUSED);
-                } else {
-                    saveInfo(UploadInfo.STATE_FAILED);
+                }
+
+                if (code == 502) {
+                    Log.d("502502502502502","accept = "+accept);
+//                    mInfo.setCurrentLength(accept);
+//                    saveInfo(UploadInfo.STATE_FINISHED);
                     return;
                 }
             }
@@ -211,7 +174,7 @@ class UploadTask implements Runnable {
         return bytesTotal;
     }
 
-    private String sendSocketPacket(byte[] bytesTotal) {
+    private synchronized String sendSocketPacket(byte[] bytesTotal) {
         try {
             OutputStream outputStream = mSocket.getOutputStream();
             outputStream.write(bytesTotal);
@@ -236,6 +199,10 @@ class UploadTask implements Runnable {
             e.printStackTrace();
         }
         return null;
+    }
+
+    interface Listener{
+         void onResult(String response);
     }
 
       public void pause() {
