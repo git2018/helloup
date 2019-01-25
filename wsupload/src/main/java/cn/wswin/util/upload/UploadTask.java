@@ -30,10 +30,6 @@ class UploadTask implements Runnable {
 
     @Override
     public void run() {
-        core();
-    }
-
-    private void core(){
         try {
             mSocket = new Socket();
             SocketAddress socketAddress = new InetSocketAddress(mInfo.getAddress(), mInfo.getPortal());
@@ -55,14 +51,14 @@ class UploadTask implements Runnable {
             while (((length = mFile.read(buffer)) != -1) ) {
 
                 synchronized (this){
-                while (suspended) {
-                    try {
-                        wait();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+                    while (suspended) {
+                        try {
+                            wait();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
-            }
 
                 byte[] filePackets = new byte[length];
                 System.arraycopy(buffer, 0, filePackets, 0, length);
