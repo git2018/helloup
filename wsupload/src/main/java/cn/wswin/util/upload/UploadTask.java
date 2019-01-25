@@ -90,10 +90,10 @@ class UploadTask implements Runnable {
                 int code = jsonResponse.getInt("code");
                 long accept = jsonResponse.getLong("accept");
 
-                long bd = mFile.getFilePointer();
-                long yd = accept;
-                boolean check = bd == yd;
-                Log.d("getFilePointer","长度"+mInfo.getFileLength()+ " 本地"+bd + " 云端"+yd + " 当前" + length +" "+check + " "+code);
+//                long bd = mFile.getFilePointer();
+//                long yd = accept;
+//                boolean check = bd == yd;
+//                Log.d("getFilePointer","长度"+mInfo.getFileLength()+ " 本地"+bd + " 云端"+yd + " 当前" + length +" "+check + " "+code);
                 mFile.seek(accept);
 
                 if (code == 200) {
@@ -109,9 +109,12 @@ class UploadTask implements Runnable {
                 }
 
                 if (code == 502) {
-                    Log.d("502502502502502","accept = "+accept);
-//                    mInfo.setCurrentLength(accept);
-//                    saveInfo(UploadInfo.STATE_FINISHED);
+                    if (accept == mInfo.getFileLength() && length<buffer.length){
+                        mInfo.setCurrentLength(accept);
+                        saveInfo(UploadInfo.STATE_FINISHED);
+                    }else {
+                        saveInfo(UploadInfo.STATE_FAILED);
+                    }
                     return;
                 }
             }
