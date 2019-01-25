@@ -67,6 +67,7 @@ class UploadTask implements Runnable {
             byte[] buffer = new byte[1024 * 10];
             long markTime = System.currentTimeMillis();
             int retryCount = 5;
+            mFile.seek(mInfo.getCurrentLength());
 
             while (((length = mFile.read(buffer)) != -1) ) {
 
