@@ -206,4 +206,10 @@ class UploadTask implements Runnable {
         UploadDBUtil.getInstance().saveUploadInfo(mInfo);
     }
 
+    public UploadInfo getInfo(){
+        return mInfo;
+    }
+
+
+
 }

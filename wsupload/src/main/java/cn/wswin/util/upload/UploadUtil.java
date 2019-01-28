@@ -4,6 +4,7 @@ package cn.wswin.util.upload;
 import android.content.Context;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -15,8 +16,8 @@ import java.util.concurrent.Executors;
 public class UploadUtil {
     private String dbName = "uploadpic.db";
     private Context context;
-    private String apiUrl;
     private static UploadUtil sInstance;
+//    private Handler handler;
 
     private ExecutorService executorService = Executors.newFixedThreadPool(5);
     private static ConcurrentHashMap<String, UploadTask> map = new ConcurrentHashMap<>();
@@ -31,9 +32,8 @@ public class UploadUtil {
         return sInstance;
     }
 
-    public void init(Context context,String dbName,String apiBaseUrl) {
+    public void init(Context context,String dbName) {
         this.context = context;
-        this.apiUrl = apiBaseUrl;
         this.dbName = dbName;
         //装载任务列表
         for (UploadInfo info:getAllUploadTasks()){
@@ -88,7 +88,15 @@ public class UploadUtil {
      * 获取所有上传任务
      */
     public List<UploadInfo> getAllUploadTasks() {
-        return UploadDBUtil.getInstance().loadAllUploadInfo();
+        if (map.size() == 0){
+            return UploadDBUtil.getInstance().loadAllUploadInfo();
+        }
+
+        List<UploadInfo> infos = new ArrayList<>();
+        for (UploadTask task : map.values()) {
+            infos.add(task.getInfo());
+        }
+        return infos;
     }
 
     public interface Listener{
@@ -125,9 +133,5 @@ public class UploadUtil {
     public void destroy() {
         executorService.shutdown();
         sInstance = null;
-    }
-
-    public String getApiUrl() {
-        return apiUrl;
     }
 }

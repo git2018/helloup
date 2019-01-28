@@ -75,12 +75,12 @@ class UploadDBUtil {
                     public void run() {
                         if (listener != null)
                             listener.onChange(info);
+
                         if (cloudListener!=null){
-                            switch (info.getState()){
-                                case UploadInfo.STATE_FINISHED:cloudListener.onAddItem(info); break;
-                                default:
-                            }
+                            if (info.getState() == UploadInfo.STATE_FINISHED)
+                                cloudListener.onAddItem(info);
                         }
+
                         if (onGoingListener != null)
                             onGoingListener.onResult(finalOnGoingNum);
                     }

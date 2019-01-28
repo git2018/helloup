@@ -29,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_pic_transfer);
 
-        UploadUtil.getInstance().init(this,"hhh.db","http://192.168.16.181");
+        UploadUtil.getInstance().init(this,"hhh.db");
 
         LinearLayoutManager mManager1 = new LinearLayoutManager(MainActivity.this);
         mManager1.setOrientation(LinearLayout.VERTICAL);
@@ -37,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
         goingRv.setLayoutManager(mManager1);
         mGoingAdapter = new UploadAdapter(MainActivity.this);
         goingRv.setAdapter(mGoingAdapter);
+        mGoingAdapter.addNewData(UploadUtil.getInstance().getAllUploadTasks());
 
         findViewById(R.id.tv_start).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -71,10 +72,18 @@ public class MainActivity extends AppCompatActivity {
         UploadUtil.getInstance().setListener(new UploadUtil.Listener() {
             @Override
             public void onChange(UploadInfo info) {
-                 List<UploadInfo> mData  = UploadUtil.getInstance().getAllUploadTasks();
-                 mGoingAdapter.addNewData(mData);
+                 mGoingAdapter.addNewData(UploadUtil.getInstance().getAllUploadTasks());
             }
         });
+
+//        UploadUtil.getInstance().setHandler(new Handler(){
+//            @Override
+//            public void handleMessage(Message msg) {
+//                super.handleMessage(msg);
+//                mGoingAdapter.addNewData(UploadUtil.getInstance().getAllUploadTasks());
+//                Log.d("setHandlersetHandler","00000");
+//            }
+//        });
 
         UploadUtil.getInstance().setOnGoingListener(new UploadUtil.OnGoingListener() {
             @Override
@@ -91,14 +100,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPermissionGranted() {
 
-//                for (UploadInfo info:UploadUtil.getInstance().getAllUploadTasks()) {
-//                    UploadUtil.getInstance().commitUploadTask("0", info.getDir()+"/"+info.getName(), "120.26.126.129", "16881");
-//                }
-
-//                new Thread(new Runnable() {
-//                    @Override
-//                    public void run() {
-
                         final File[] files = new File("/storage/emulated/0/DCIM/Camera/").listFiles();
                         for (int i=0;i<files.length;i++) {
                             final File file = files[i];
@@ -106,47 +107,6 @@ public class MainActivity extends AppCompatActivity {
                                 UploadUtil.getInstance().commitUploadTask(file.getPath(), "192.168.16.182", "81");
                             }
                         }
-//                                String md5 = MD5.getMd5ByFile(file);
-//                                String result = ApiUtil.authHttpGet("http://192.168.16.181/api/progress/"+md5);
-//                                try {
-//                                    long currentLength = 0;
-//                                    JSONObject jsonObject = new JSONObject(result);
-//                                    String data = jsonObject.getString("data");
-//                                    if (!data.equalsIgnoreCase("null"))
-//                                        currentLength = Long.parseLong(jsonObject.getJSONObject("data").getString("offset"));
-//
-//                                    UploadUtil.getInstance().commitUploadTask( file.getPath(), "192.168.16.182", "81",currentLength);
-//                                } catch (Exception e) {
-//                                    e.printStackTrace();
-//                                }
-
-//                            }
-//                        }
-//                    }
-//                }).start();
-
-
-//                final File[] files = new File("/storage/emulated/0/DCIM/Camera/").listFiles();
-//                for (int i=0;i<files.length;i++) {
-//                    final File file = files[i];
-//                    if (file.getName().endsWith("mp4")) {
-//
-//
-//                    }
-//                }
-//                    new Thread(new Runnable() {
-//                        @Override
-//                        public void run() {
-//                            final String md5 = MD5.getMd5ByFile(file);
-//                            String result = ApiUtil.authHttpGet("http://192.168.16.181/api/progress/"+md5);
-//                            Log.d("progressprogress",result);
-//                        }
-//                    }).start();
-//                        UploadUtil.getInstance().commitUploadTask(file.getPath(), "192.168.16.182", "81");
-//                }
-//                String filePath = "/storage/emulated/0/DCIM/Camera/IMG_20190109_173534.jpg";
-//                UploadUtil.getInstance().commitUploadTask("0", filePath, "120.26.126.129", "16881");
-
             }
 
             @Override
