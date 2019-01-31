@@ -1,6 +1,7 @@
 package com.albertsu.helloupload;
 
 import android.content.Context;
+import android.graphics.BitmapFactory;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -33,6 +34,7 @@ public class UploadAdapter extends RecyclerView.Adapter<UploadAdapter.MyViewHold
     public void onBindViewHolder(@NonNull final MyViewHolder holder, final int position) {
         final UploadInfo uploadInfo = mData.get(position);
 
+//        holder.image.setImageBitmap(BitmapFactory.decodeFile(uploadInfo.getDir() + "/" + uploadInfo.getName()));
         holder.image.setImageResource(R.mipmap.ic_launcher);
         holder.tv_name.setText(uploadInfo.getName());
         holder.tv_staus.setText(UploadInfo.statusTxt[uploadInfo.getState()] +" | "+ uploadInfo.getCurrentLength());

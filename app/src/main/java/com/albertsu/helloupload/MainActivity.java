@@ -10,6 +10,8 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.gavin.com.library.StickyDecoration;
+import com.gavin.com.library.listener.GroupListener;
 import com.gun0912.tedpermission.PermissionListener;
 import com.gun0912.tedpermission.TedPermission;
 
@@ -35,6 +37,16 @@ public class MainActivity extends AppCompatActivity {
         mManager1.setOrientation(LinearLayout.VERTICAL);
         goingRv = findViewById(R.id.rv_going);
         goingRv.setLayoutManager(mManager1);
+
+        goingRv.addItemDecoration(StickyDecoration.Builder
+                .init(new GroupListener() {
+                    @Override
+                    public String getGroupName(int position) {
+                        //获取分组名
+                        return UploadUtil.getInstance().getAllUploadTasks().get(position).getState()+"";
+                    }
+                }).build());
+
         mGoingAdapter = new UploadAdapter(MainActivity.this);
         goingRv.setAdapter(mGoingAdapter);
         mGoingAdapter.addNewData(UploadUtil.getInstance().getAllUploadTasks());

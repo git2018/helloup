@@ -1,10 +1,14 @@
 
 package cn.wswin.util.upload;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
+import android.util.Log;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -89,14 +93,15 @@ public class UploadUtil {
      */
     public List<UploadInfo> getAllUploadTasks() {
         if (map.size() == 0){
-            return UploadDBUtil.getInstance().loadAllUploadInfo();
+            List<UploadInfo> list1 = UploadDBUtil.getInstance().loadAllUploadInfo();
+            return sort(list1);
+        }else {
+            List<UploadInfo> infos = new ArrayList<>();
+            for (UploadTask task : map.values()) {
+                infos.add(task.getInfo());
+            }
+            return sort(infos);
         }
-
-        List<UploadInfo> infos = new ArrayList<>();
-        for (UploadTask task : map.values()) {
-            infos.add(task.getInfo());
-        }
-        return infos;
     }
 
     public interface Listener{
@@ -133,5 +138,17 @@ public class UploadUtil {
     public void destroy() {
         executorService.shutdown();
         sInstance = null;
+    }
+
+    private List<UploadInfo> sort(List<UploadInfo> infos){
+        Comparator<UploadInfo> comparator = new Comparator<UploadInfo>() {
+            @SuppressLint("NewApi")
+            public int compare(UploadInfo p1, UploadInfo p2) {
+                return Integer.compare(p1.getState() , p2.getState());
+            }
+        };
+        System.setProperty("java.util.Arrays.useLegacyMergeSort", "true");
+        Collections.sort(infos,comparator);
+        return infos;
     }
 }
